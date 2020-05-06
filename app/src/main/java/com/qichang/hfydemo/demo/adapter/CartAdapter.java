@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import com.qichang.hfydemo.R;
 import com.qichang.hfydemo.demo.entity.CartInfo;
+import com.qichang.hfydemo.demo.itemclick.OnAllSelListenter;
 import com.qichang.hfydemo.demo.itemclick.OnClickAddCloseListenter;
 import com.qichang.hfydemo.demo.itemclick.OnClickListenterModel;
 import com.qichang.hfydemo.demo.itemclick.OnItemMoneyClickListener;
@@ -56,7 +57,7 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
             }
         });
 
-        //店铺下的checkbox
+        //商品的checkbox
         listBaseAdapter.setOnClickListenterModel(new OnClickListenterModel() {
             @Override
             public void onItemClick(boolean isFlang, View view, int onePosition, int position) {
@@ -74,6 +75,7 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
                         }
                     }
                     list.get(onePosition).setIscheck(isCheck);
+                    onAllSelListenter.onItemClick(list.get(onePosition).getItems());
                     onItemMoneyClickListener.onItemClick(view, onePosition);
                     notifyDataSetChanged();
                 }
@@ -84,13 +86,13 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
          */
         listBaseAdapter.setOnClickAddCloseListenter(new OnClickAddCloseListenter() {
             @Override
-            public void onItemClick(View view, int index, int onePosition, int position,int num) {
-                if (index==1){
-                    if (num>1) {
+            public void onItemClick(View view, int index, int onePosition, int position, int num) {
+                if (index == 1) {
+                    if (num > 1) {
                         list.get(onePosition).getItems().get(position).setNum((num - 1));
                         notifyDataSetChanged();
                     }
-                }else {
+                } else {
                     list.get(onePosition).getItems().get(position).setNum((num + 1));
                     notifyDataSetChanged();
                 }
@@ -98,6 +100,13 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
             }
         });
 
+    }
+
+    // 底部全选的监听
+    private OnAllSelListenter onAllSelListenter = null;
+
+    public void setAllSelListenter(OnAllSelListenter listener) {
+        this.onAllSelListenter = listener;
     }
 
     // CheckBox全选的方法
@@ -114,8 +123,6 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
     public void setOnItemMoneyClickListener(OnItemMoneyClickListener listener) {
         this.onItemMoneyClickListener = listener;
     }
-
-
 
 
     /**

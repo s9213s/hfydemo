@@ -74,7 +74,7 @@ public class GwcBean {
         private String productName;
         private String color;
         private String size;
-        private float price;
+        private double price;
         private int count;
         private boolean isSelect;
 
@@ -150,11 +150,11 @@ public class GwcBean {
             this.size = size;
         }
 
-        public float getPrice() {
+        public double getPrice() {
             return price;
         }
 
-        public void setPrice(float price) {
+        public void setPrice(double price) {
             this.price = price;
         }
 

@@ -24,8 +24,11 @@ import com.lzy.okgo.model.Response;
 import com.qichang.hfydemo.bean.BannerBean;
 import com.qichang.hfydemo.demo.adapter.CartAdapter;
 import com.qichang.hfydemo.demo.entity.CartInfo;
+import com.qichang.hfydemo.demo.itemclick.OnAllSelListenter;
 import com.qichang.hfydemo.demo.itemclick.OnItemMoneyClickListener;
 import com.qichang.hfydemo.demo.itemclick.OnViewItemClickListener;
+
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -41,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     Button cartShoppMoular;
     CheckBox checkBox;
 
+    private boolean isCheck;
 
     private TextView btnDelete;
 
@@ -74,6 +78,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showExpandData() {
+        cartAdapter.setAllSelListenter(new OnAllSelListenter() {
+            @Override
+            public void onItemClick(List<CartInfo.DataBean.ItemsBean> list) {
+                for (int i = 0; i < list.size(); i++) {
+                    Log.w("hfydemo", "点击商品选择========" + list.get(i).ischeck());
+                    if (list.get(i).ischeck()) {//true,true,true
+                        isCheck = true;
+                    } else {
+                        isCheck = false;
+                        break;
+                    }
+                }
+                checkBox.setChecked(isCheck);
+            }
+        });
         /**
          * 全选
          */
@@ -86,6 +105,18 @@ public class MainActivity extends AppCompatActivity {
                     cartInfo.getData().get(position).getItems().get(i).setIscheck(isFlang);
                 }
                 cartAdapter.notifyDataSetChanged();
+
+                for (int i = 0; i < cartAdapter.getItemCount(); i++) {
+                    Log.w("hfydemo","店铺选择========"+cartInfo.getData().get(i).ischeck());
+                    if ( cartInfo.getData().get(i).ischeck()) {//true,true,true
+                        isCheck = true;
+                    } else {
+                        isCheck = false;
+                        break;
+                    }
+                }
+                checkBox.setChecked(isCheck);
+
                 showCommodityCalculation();
             }
         });
@@ -171,12 +202,13 @@ public class MainActivity extends AppCompatActivity {
                     showCommodityCalculation();
                     break;
                 case R.id.btn_delete:
-                    //删除选中商品
-                    cartAdapter.removeChecked();
-                    showCommodityCalculation();
+//                    //删除选中商品
+//                    cartAdapter.removeChecked();
+//                    showCommodityCalculation();
+                    startActivity(new Intent(MainActivity.this, GwcActivity.class));
                     break;
                 case R.id.cart_shopp_moular:
-                    Toast.makeText(MainActivity.this,"提交订单:  "+cartMoney.getText().toString()+"元",Toast.LENGTH_LONG).show();
+                    Toast.makeText(MainActivity.this, "提交订单:  " + cartMoney.getText().toString() + "元", Toast.LENGTH_LONG).show();
                     break;
             }
         }

@@ -6,6 +6,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -17,6 +18,9 @@ import com.fing.uitl.ParseJsonUtil;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.model.Response;
 import com.qichang.hfydemo.adapter.ShopAdapter;
+import com.qichang.hfydemo.adapter.itemclick.OnAllSelectClickListener;
+import com.qichang.hfydemo.adapter.itemclick.OnViewItemClickListener_shop;
+import com.qichang.hfydemo.adapter.itemclick.onItemMoneyClickListener_shop;
 import com.qichang.hfydemo.base.BaseActivity;
 import com.qichang.hfydemo.bean.GwcBean;
 import com.qichang.hfydemo.bean.ShopCartBean;
@@ -51,11 +55,14 @@ public class GwcActivity extends BaseActivity {
     @BindView(R.id.tv_submit)
     TextView tvSubmit;
     @BindView(R.id.tv_all_select)
-    TextView tv_all_select;
+    CheckBox tv_all_select;
     @BindView(R.id.ll_pay)
     LinearLayout llPay;
     private ShopAdapter shopAdapter;
-    private boolean mSelect;
+
+    double price;
+    int num;
+    private boolean isCheck;
 
     @Override
     public int bindLayout() {
@@ -70,40 +77,55 @@ public class GwcActivity extends BaseActivity {
         shopAdapter = new ShopAdapter(null);
         recycler.setAdapter(shopAdapter);
 
-        //实时监控全选按钮
-        shopAdapter.setResfreshListener(new ShopAdapter.OnResfreshListener() {
+        shopAdapter.setOnAllSelectClickListener(new OnAllSelectClickListener() {
             @Override
-            public void onResfresh(boolean isSelect,int po) {
-//                List<String> isSelectStr = new ArrayList<>();
-//                for (int i = 0; i < shopAdapter.getData().size(); i++) {
-//                    if (!shopAdapter.getData().get(i).isShopSelect()) {
-//                        isSelectStr.add("没选");
-//                    } else {
-//                        isSelectStr.add("选");
-//                    }
-//                }
-//                Log.w("hfydemo", "isSelectStr:" + ParseJsonUtil.toJson(isSelectStr));
-//                if (isSelectStr.contains("没选")) {
-//                    shopAdapter.getData().get(isSelect).setShopSelect(false);
-//                    Drawable left = getResources().getDrawable(R.drawable.shopcart_unselected);
-//                    tv_all_select.setCompoundDrawablesWithIntrinsicBounds(left, null, null, null);
-//                    mSelect = false;
-//                } else {
-//                    shopAdapter.getData().get(isSelect).setShopSelect(true);
-//                    Drawable left = getResources().getDrawable(R.drawable.shopcart_selected);
-//                    tv_all_select.setCompoundDrawablesWithIntrinsicBounds(left, null, null, null);
-//                    mSelect = true;
-//                }
-
-                mSelect = isSelect;
-                if(isSelect){
-                    Drawable left = getResources().getDrawable(R.drawable.shopcart_selected);
-                    tv_all_select.setCompoundDrawablesWithIntrinsicBounds(left,null,null,null);
-                }else {
-                    Drawable left = getResources().getDrawable(R.drawable.shopcart_unselected);
-                    tv_all_select.setCompoundDrawablesWithIntrinsicBounds(left,null,null,null);
+            public void OnSelectClick(List<GwcBean.CartlistBean> list) {
+                for (int i = 0; i < list.size(); i++) {
+                    Log.w("hfydemo", "点击商品选择========" + list.get(i).isSelect());
+                    if (list.get(i).isSelect()) {//true,true,true
+                        isCheck = true;
+                    } else {
+                        isCheck = false;
+                        break;
+                    }
                 }
+                tv_all_select.setChecked(isCheck);
+            }
+        });
+        /**
+         * 全选
+         */
+        shopAdapter.setOnItemClickListener_shop(new OnViewItemClickListener_shop() {
+            @Override
+            public void onItemClick(boolean isFlang, View view, int position) {
+                shopAdapter.getData().get(position).setShopSelect(isFlang);
+                int length = shopAdapter.getData().get(position).getCartlist().size();
+                for (int i = 0; i < length; i++) {
+                    shopAdapter.getData().get(position).getCartlist().get(i).setSelect(isFlang);
+                }
+                shopAdapter.notifyDataSetChanged();
 
+                for (int i = 0; i < shopAdapter.getData().size(); i++) {
+                    Log.w("hfydemo", "店铺选择========" + shopAdapter.getData().get(i).isShopSelect());
+                    if (shopAdapter.getData().get(i).isShopSelect()) {//true,true,true
+                        isCheck = true;
+                    } else {
+                        isCheck = false;
+                        break;
+                    }
+                }
+                tv_all_select.setChecked(isCheck);
+
+                showCommodityCalculation();
+            }
+        });
+        /**
+         * 计算价钱
+         */
+        shopAdapter.setOnItemMoneyClickListener_shop(new onItemMoneyClickListener_shop() {
+            @Override
+            public void onItemClick(View view, int position) {
+                showCommodityCalculation();
             }
         });
 
@@ -124,6 +146,39 @@ public class GwcActivity extends BaseActivity {
                 });
     }
 
+    /***
+     * 计算商品的数量和价格
+     */
+    private void showCommodityCalculation() {
+        price = 0;
+        num = 0;
+        for (int i = 0; i < shopAdapter.getData().size(); i++) {
+            for (int j = 0; j < shopAdapter.getData().get(i).getCartlist().size(); j++) {
+                if (shopAdapter.getData().get(i).getCartlist().get(j).isSelect()) {
+                    price += Double.valueOf((shopAdapter.getData().get(i).getCartlist().get(j).getCount() * shopAdapter.getData().get(i).getCartlist().get(j).getPrice()));
+                    num++;
+                } else {
+                    tv_all_select.setChecked(false);
+                }
+            }
+        }
+        if (price == 0.0) {
+            tvAllNum.setText("共0件商品");
+            tvAllPrice.setText("总价：¥ 0.0");
+            return;
+        }
+        try {
+            String money = String.valueOf(price);
+            tvAllNum.setText("共" + num + "件商品");
+            if (money.substring(money.indexOf("."), money.length()).length() > 2) {
+                tvAllPrice.setText("总价：¥ " + money.substring(0, (money.indexOf(".") + 3)));
+                return;
+            }
+            tvAllPrice.setText("总价：¥ " + money.substring(0, (money.indexOf(".") + 2)));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @OnClick({R.id.tv_bianji, R.id.tv_submit, R.id.tv_all_select})
     public void onViewClicked(View view) {
@@ -133,50 +188,28 @@ public class GwcActivity extends BaseActivity {
             case R.id.tv_submit:
                 break;
             case R.id.tv_all_select:
-//                if (mSelect) {
-//                    mSelect = false;
-//                    Drawable left = getResources().getDrawable(R.drawable.shopcart_unselected);
-//                    tv_all_select.setCompoundDrawablesWithIntrinsicBounds(left, null, null, null);
-//                    for (int i = 0; i < shopAdapter.getData().size(); i++) {
-//                            shopAdapter.getData().get(i).setShopSelect(false);
-//                    }
-//                } else {
-//                    mSelect = true;
-//                    Drawable left = getResources().getDrawable(R.drawable.shopcart_selected);
-//                    tv_all_select.setCompoundDrawablesWithIntrinsicBounds(left, null, null, null);
-//                    for (int i = 0; i < shopAdapter.getData().size(); i++) {
-//                        shopAdapter.getData().get(i).setShopSelect(true);
-//                    }
-//                }
-//                shopAdapter.notifyDataSetChanged();
-
-
-
-
-//                mSelect = !mSelect;
-//                if(mSelect){
-//                    Drawable left = getResources().getDrawable(R.drawable.shopcart_selected);
-//                    tv_all_select.setCompoundDrawablesWithIntrinsicBounds(left,null,null,null);
-//                    for(int i = 0;i < shopAdapter.getData().size();i++){
-////                        shopAdapter.getData().get(i).setSelect(true);
-//                        shopAdapter.getData().get(i).setShopSelect(true);
-//                    }
-//                }else{
-//                    Drawable left = getResources().getDrawable(R.drawable.shopcart_unselected);
-//                    tv_all_select.setCompoundDrawablesWithIntrinsicBounds(left,null,null,null);
-//                    for(int i = 0;i <  shopAdapter.getData().size();i++){
-////                        shopAdapter.getData().get(i).setSelect(false);
-//                        shopAdapter.getData().get(i).setShopSelect(false);
-//                    }
-//                }
-                Log.w("hfydemo","之前："+ParseJsonUtil.toJson(shopAdapter.getData()));
-                for(int i = 0;i <  shopAdapter.getData().size();i++){
-//                        shopAdapter.getData().get(i).setSelect(false);
+                if (tv_all_select.isChecked()) {
+                    int length = shopAdapter.getData().size();
+                    for (int i = 0; i < length; i++) {
                         shopAdapter.getData().get(i).setShopSelect(true);
+                        int lengthn = shopAdapter.getData().get(i).getCartlist().size();
+                        for (int j = 0; j < lengthn; j++) {
+                            shopAdapter.getData().get(i).getCartlist().get(j).setSelect(true);
+                        }
                     }
-                shopAdapter.notifyDataSetChanged();
-                Log.w("hfydemo","之后："+ParseJsonUtil.toJson(shopAdapter.getData()));
 
+                } else {
+                    int length = shopAdapter.getData().size();
+                    for (int i = 0; i < length; i++) {
+                        shopAdapter.getData().get(i).setShopSelect(false);
+                        int lengthn = shopAdapter.getData().get(i).getCartlist().size();
+                        for (int j = 0; j < lengthn; j++) {
+                            shopAdapter.getData().get(i).getCartlist().get(j).setSelect(false);
+                        }
+                    }
+                }
+                shopAdapter.notifyDataSetChanged();
+                showCommodityCalculation();
                 break;
         }
     }
