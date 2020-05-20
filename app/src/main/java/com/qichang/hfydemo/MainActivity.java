@@ -203,9 +203,9 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case R.id.btn_delete:
 //                    //删除选中商品
-//                    cartAdapter.removeChecked();
-//                    showCommodityCalculation();
-                    startActivity(new Intent(MainActivity.this, GwcActivity.class));
+                    cartAdapter.removeChecked();
+                    showCommodityCalculation();
+//                    startActivity(new Intent(MainActivity.this, GwcActivity.class));
                     break;
                 case R.id.cart_shopp_moular:
                     Toast.makeText(MainActivity.this, "提交订单:  " + cartMoney.getText().toString() + "元", Toast.LENGTH_LONG).show();

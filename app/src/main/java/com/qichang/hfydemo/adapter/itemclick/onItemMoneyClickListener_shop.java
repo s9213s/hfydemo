@@ -8,5 +8,5 @@ import android.view.View;
  * @time 2020/4/30
  */
 public interface onItemMoneyClickListener_shop {
-    void onItemClick(View view, int position);
+    void onItemClick( int position);
 }

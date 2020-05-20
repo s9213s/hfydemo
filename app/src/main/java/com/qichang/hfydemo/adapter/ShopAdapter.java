@@ -1,15 +1,12 @@
 package com.qichang.hfydemo.adapter;
 
-import android.graphics.drawable.Drawable;
+
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
-import android.widget.BaseAdapter;
 import android.widget.CheckBox;
-import android.widget.ImageView;
-
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.BaseViewHolder;
 import com.fing.uitl.ParseJsonUtil;
@@ -20,10 +17,8 @@ import com.qichang.hfydemo.adapter.itemclick.OnClickListenterModel_cloth;
 import com.qichang.hfydemo.adapter.itemclick.OnViewItemClickListener_shop;
 import com.qichang.hfydemo.adapter.itemclick.onItemMoneyClickListener_shop;
 import com.qichang.hfydemo.bean.GwcBean;
-import com.qichang.hfydemo.bean.ShopCartBean;
-
-import java.util.ArrayList;
 import java.util.List;
+
 
 /**
  * @author hfy
@@ -46,6 +41,7 @@ public class ShopAdapter extends BaseQuickAdapter<GwcBean, BaseViewHolder> {
         List<GwcBean.CartlistBean> mList = item.getCartlist();
         final ClothAdapter clothAdapter = new ClothAdapter(mList);
         recyclerView.setFocusableInTouchMode(false);
+        recyclerView.setHasFixedSize(true);
         recyclerView.requestFocus();
         recyclerView.setFocusable(false);
         recyclerView.setAdapter(clothAdapter);
@@ -63,9 +59,7 @@ public class ShopAdapter extends BaseQuickAdapter<GwcBean, BaseViewHolder> {
             public void onItemClick(boolean isFlang, View view, int position) {
                 clothAdapter.getData().get(position).setSelect(isFlang);
                 int length = clothAdapter.getData().size();
-                if (length == 1) {
-                    mOnItemClickListener.onItemClick(img_shop_select.isChecked(), view, position);
-                } else {
+                //遍历商品列表，如果商品全是选中状态则店铺状态为选中
                     for (int i = 0; i < length; i++) {
                         if (clothAdapter.getData().get(i).isSelect()) {//true,true,true
                             isCheck = true;
@@ -76,9 +70,8 @@ public class ShopAdapter extends BaseQuickAdapter<GwcBean, BaseViewHolder> {
                     }
                     item.setShopSelect(isCheck);
                     onAllSelectClickListener.OnSelectClick(clothAdapter.getData());
-                    onItemMoneyClickListener.onItemClick(view, helper.getAdapterPosition());
+                    onItemMoneyClickListener.onItemClick(helper.getAdapterPosition());
                     notifyDataSetChanged();
-                }
             }
         });
 
@@ -94,7 +87,20 @@ public class ShopAdapter extends BaseQuickAdapter<GwcBean, BaseViewHolder> {
                     item.getCartlist().get(position).setCount(num + 1);
                     notifyDataSetChanged();
                 }
-                onItemMoneyClickListener.onItemClick(view, helper.getAdapterPosition());
+                onItemMoneyClickListener.onItemClick(helper.getAdapterPosition());
+            }
+        });
+
+        //商品的侧滑删除
+        clothAdapter.setOnItemChildClickListener(new OnItemChildClickListener() {
+            @Override
+            public void onItemChildClick(BaseQuickAdapter adapter, View view, int position) {
+                adapter.remove(position);
+                if (adapter.getData().size() == 0) {
+                    remove(helper.getAdapterPosition());
+                }
+                notifyDataSetChanged();
+                onItemMoneyClickListener.onItemClick(12580);
             }
         });
 
